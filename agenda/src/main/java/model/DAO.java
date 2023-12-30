@@ -75,6 +75,7 @@ public class DAO {
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				// variáveis de apoio que recebem os dados do banco
+				//Observação importante: os números do getString(?) correspondem às colunas da tabela do banco de dados
 				String idcon = rs.getString(1);
 				String nome = rs.getString(2);
 				String fone = rs.getString(3);
@@ -88,7 +89,47 @@ public class DAO {
 		} catch (Exception e) {
 			System.out.println(e);
 			return null;
+		} 
+	}
+		
+		/** CRUD UPDATE **/ 
+		//selecionar contato 
+		public void selecionarContato(JavaBeans contato) {
+			String read2 = "select * from contatos where idcon = ?";
+			try {
+				Connection con = conectar();
+				PreparedStatement pst = con.prepareStatement(read2); 
+				pst.setString(1,contato.getIdcon());
+				ResultSet rs = pst.executeQuery();
+				while(rs.next()) {
+					//Observação importante: os números do getString(?) correspondem às colunas da tabela do banco de dados
+					contato.setIdcon(rs.getString(1));
+					contato.setNome(rs.getString(2)); 
+					contato.setFone(rs.getString(3)); 
+					contato.setEmail(rs.getString(4));
+				}
+				con.close();
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+		} 
+		
+		//editar contato 
+		
+		public void alterarContato(JavaBeans contato) {
+			String create = "update contatos set nome=?, fone=?, email=? where idcon=?"; 
+			try {
+				Connection con = conectar();
+				PreparedStatement pst = con.prepareStatement(create);
+				pst.setString(1, contato.getNome());
+				pst.setString(2, contato.getFone()); 
+				pst.setString(3, contato.getEmail()); 
+				pst.setString(4, contato.getIdcon());
+				
+			} catch (Exception e) {
+				System.out.println(e);
+			}
 		}
 
-	}
+	
 }
