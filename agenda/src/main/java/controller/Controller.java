@@ -10,10 +10,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+
 import model.DAO;
 import model.JavaBeans;
 
-@WebServlet(urlPatterns = { "/Controller", "/main", "/insert", "/select", "/update", "/delete" })
+@WebServlet(urlPatterns = { "/Controller", "/main", "/insert", "/select", "/update", "/delete", "/report" })
 public class Controller extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	DAO dao = new DAO();
@@ -39,6 +45,8 @@ public class Controller extends HttpServlet {
 			editarContato(request, response);
 		} else if (action.equals("/delete")) {
 			removerContato(request, response);
+		} else if (action.equals("/report")) {
+			gerarRelatorio(request, response);
 		} else {
 			response.sendRedirect("index.html");
 		}
@@ -126,19 +134,59 @@ public class Controller extends HttpServlet {
 		dao.alterarContato(contato);
 		// redirecionar para o documento agenda.jsp atualizando as alterações
 		response.sendRedirect("main");
-	} 
-	
-	//Remover um contato
+	}
+
+	// Remover um contato
 	protected void removerContato(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		//recebimento do id do contato a ser removido validador.js
+		// recebimento do id do contato a ser removido validador.js
 		String idcon = request.getParameter("idcon");
-		//setar a variavel idcon Javabeans
+		// setar a variavel idcon Javabeans
 		contato.setIdcon(idcon);
-		//executar o método deletarContato 
+		// executar o método deletarContato
 		dao.deletarContato(contato);
-		//redirecionar para a agenda.jsp com lista atualizada
+		// redirecionar para a agenda.jsp com lista atualizada
 		response.sendRedirect("main");
-		
+
+	} 
+	
+	// Gerar relatório em pdf
+	
+	protected void gerarRelatorio(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException{
+		Document documento = new Document();
+		try {
+			//tipo de conteúdo 
+			response.setContentType("application/pdf");
+			//nome do documento 
+			response.addHeader("Content-Disposition", "inline; filename="+"contatos.pdf");
+			//criar o documento
+			PdfWriter.getInstance(documento, response.getOutputStream()); 
+			//abrir o documento 
+			documento.open();
+			documento.add(new Paragraph("Lista de Contatos")); 
+			documento.add(new Paragraph(" ")); 
+			//criar uma tabela 
+			PdfPTable table = new PdfPTable(3);
+			PdfPCell col1 = new PdfPCell(new Paragraph("Nome"));
+			PdfPCell col2 = new PdfPCell(new Paragraph("Fone"));
+			PdfPCell col3 = new PdfPCell(new Paragraph("E-mail"));
+			table.addCell(col1);
+			table.addCell(col2); 
+			table.addCell(col3);
+			documento.add(table);
+			//popular a tabela com os contatos 
+			ArrayList<JavaBeans> lista = dao.listarContatos();
+			for(int i = 0; i < lista.size(); i++) {
+				table.addCell(lista.get(i).getNome());
+				table.addCell(lista.get(i).getFone()); 
+				table.addCell(lista.get(i).getEmail());
+				System.out.println(lista.get(i).getNome());
+			}
+			documento.close();
+		} catch (Exception e) {
+			System.out.println(e);
+			documento.close();
+		}
 	}
 }
